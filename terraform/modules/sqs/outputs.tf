@@ -1,29 +1,24 @@
 output "queue_id" {
   description = "The URL of the SQS queue"
-  value       = aws_sqs_queue.this.id
+  value       = module.sqs.queue_id
 }
 
 output "queue_arn" {
   description = "The ARN of the SQS queue"
-  value       = aws_sqs_queue.this.arn
+  value       = module.sqs.queue_arn
 }
 
 output "queue_url" {
   description = "The URL of the SQS queue"
-  value       = aws_sqs_queue.this.url
+  value       = module.sqs.queue_url
 }
 
 output "queue_name" {
   description = "The name of the SQS queue"
-  value       = aws_sqs_queue.this.name
-}
-
-output "dlq_id" {
-  description = "The URL of the dead letter queue"
-  value       = var.create_dlq ? aws_sqs_queue.dlq[0].id : null
+  value       = module.sqs.queue_name
 }
 
 output "dlq_arn" {
   description = "The ARN of the dead letter queue"
-  value       = var.create_dlq ? aws_sqs_queue.dlq[0].arn : null
+  value       = var.create_dlq ? module.sqs.dead_letter_queue_arn : null
 }

@@ -1,22 +1,22 @@
-resource "aws_s3_bucket" "this" {
+module "s3_bucket" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "~> 4.0"
+
   bucket        = var.bucket_name
   force_destroy = var.force_destroy
+
+  # Versioning
+  versioning = var.enable_versioning ? {
+    enabled = true
+  } : {}
 
   tags = var.tags
 }
 
-resource "aws_s3_bucket_versioning" "this" {
-  count  = var.enable_versioning ? 1 : 0
-  bucket = aws_s3_bucket.this.id
-
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
+# S3 bucket notification for Lambda trigger
 resource "aws_s3_bucket_notification" "lambda_trigger" {
   count  = var.lambda_function_arn != null ? 1 : 0
-  bucket = aws_s3_bucket.this.id
+  bucket = module.s3_bucket.s3_bucket_id
 
   lambda_function {
     lambda_function_arn = var.lambda_function_arn
