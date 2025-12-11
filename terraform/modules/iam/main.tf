@@ -3,10 +3,10 @@ module "lambda_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role"
   version = "~> 5.0"
 
-  create_role             = true
-  role_name               = var.role_name
-  role_requires_mfa       = false
-  trusted_role_services   = ["lambda.amazonaws.com"]
+  create_role           = true
+  role_name             = var.role_name
+  role_requires_mfa     = false
+  trusted_role_services = ["lambda.amazonaws.com"]
   custom_role_policy_arns = [
     module.s3_read_policy.arn,
     module.sqs_write_policy.arn,
@@ -78,9 +78,9 @@ module "cloudwatch_logs_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "CreateLogGroup"
-        Effect = "Allow"
-        Action = "logs:CreateLogGroup"
+        Sid      = "CreateLogGroup"
+        Effect   = "Allow"
+        Action   = "logs:CreateLogGroup"
         Resource = "arn:aws:logs:${var.aws_region}:*:*"
       },
       {

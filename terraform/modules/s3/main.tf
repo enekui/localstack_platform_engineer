@@ -15,7 +15,7 @@ module "s3_bucket" {
 
 # S3 bucket notification for Lambda trigger
 resource "aws_s3_bucket_notification" "lambda_trigger" {
-  count  = var.lambda_function_arn != null ? 1 : 0
+  count  = var.enable_lambda_notification ? 1 : 0
   bucket = module.s3_bucket.s3_bucket_id
 
   lambda_function {

@@ -27,5 +27,8 @@ module "lambda_function" {
     }
   } : {}
 
+  # Disable versioning to avoid $LATEST permission issue
+  create_current_version_allowed_triggers = false
+
   tags = var.tags
 }

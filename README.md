@@ -54,29 +54,44 @@ An event-driven file processing pipeline built with Terraform and LocalStack. Th
 │   └── handler.py                # Python Lambda handler
 ├── scripts/
 │   └── verify.sh                 # Pipeline verification script
-├── docker-compose.yml            # LocalStack container setup
 └── README.md                     # This file
 ```
 
 ## Requirements
 
 - **Docker**: >= 20.10
-- **Docker Compose**: >= 2.0
+- **LocalStack CLI**: >= 3.0 (see [installation guide](https://docs.localstack.cloud/getting-started/installation/))
 - **Terraform**: >= 1.0.0
 - **AWS CLI**: >= 2.0 (for verification script)
 - **jq**: For JSON parsing in verification script
+
+### Installing LocalStack CLI
+
+**macOS (Homebrew):**
+```bash
+brew install localstack/tap/localstack-cli
+```
+
+**Linux/Other:**
+```bash
+pip install localstack
+```
+
+For detailed installation instructions, see: https://docs.localstack.cloud/getting-started/installation/
 
 ## Quick Start
 
 ### 1. Start LocalStack
 
 ```bash
-docker-compose up -d
-```
+# Start LocalStack in detached mode
+localstack start -d
 
-Verify LocalStack is running:
-```bash
-curl http://localhost:4566/_localstack/health
+# Wait for LocalStack to be ready
+localstack wait -t 30
+
+# Verify LocalStack is running
+localstack status
 ```
 
 ### 2. Deploy Infrastructure
@@ -123,7 +138,7 @@ cd terraform
 terraform destroy -auto-approve
 
 # Stop LocalStack
-docker-compose down
+localstack stop
 ```
 
 ## Configuration
@@ -196,6 +211,25 @@ terraform fmt -check -recursive
 terraform validate
 ```
 
+## LocalStack CLI Commands
+
+```bash
+# Start LocalStack
+localstack start -d
+
+# Check status
+localstack status
+
+# View logs
+localstack logs
+
+# Stop LocalStack
+localstack stop
+
+# Restart LocalStack
+localstack restart
+```
+
 ## Security
 
 This solution implements **least privilege IAM policies**:
@@ -223,8 +257,11 @@ This project uses official Terraform AWS modules as base:
 # Check Docker is running
 docker info
 
-# Check LocalStack logs
-docker-compose logs localstack
+# Check LocalStack status
+localstack status
+
+# View LocalStack logs
+localstack logs
 ```
 
 ### Lambda not triggering

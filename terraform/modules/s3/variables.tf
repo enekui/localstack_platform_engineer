@@ -15,10 +15,16 @@ variable "enable_versioning" {
   default     = false
 }
 
+variable "enable_lambda_notification" {
+  description = "Enable S3 notification to Lambda"
+  type        = bool
+  default     = true
+}
+
 variable "lambda_function_arn" {
   description = "ARN of the Lambda function to trigger on object creation"
   type        = string
-  default     = null
+  default     = ""
 }
 
 variable "notification_prefix" {
