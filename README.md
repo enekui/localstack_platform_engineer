@@ -54,6 +54,11 @@ An event-driven file processing pipeline built with Terraform and LocalStack. Th
 │   └── handler.py                # Python Lambda handler
 ├── scripts/
 │   └── verify.sh                 # Pipeline verification script
+├── examples/
+│   ├── localstack/               # LocalStack deployment example
+│   │   └── main.tf
+│   └── aws/                      # AWS Cloud deployment example
+│       └── main.tf
 └── README.md                     # This file
 ```
 
@@ -162,6 +167,28 @@ localstack stop
 | `environment` | `dev` | Environment name |
 | `project_name` | `file-processor` | Project name prefix |
 
+## Deployment Examples
+
+Ready-to-use deployment examples are available in the `examples/` folder:
+
+### LocalStack (Local Development)
+
+```bash
+cd examples/localstack
+terraform init
+terraform apply -auto-approve
+```
+
+### AWS Cloud (Production)
+
+```bash
+cd examples/aws
+terraform init
+terraform apply
+```
+
+See [examples/README.md](examples/README.md) for detailed instructions.
+
 ## Deploying to Real AWS
 
 To deploy to real AWS instead of LocalStack:
@@ -181,6 +208,16 @@ export AWS_ACCESS_KEY_ID="your-access-key"
 export AWS_SECRET_ACCESS_KEY="your-secret-key"
 export AWS_REGION="eu-west-1"
 ```
+
+### Key Differences: LocalStack vs AWS
+
+| Feature | LocalStack | AWS Cloud |
+|---------|------------|-----------|
+| `use_localstack` | `true` (default) | `false` |
+| Endpoint | `http://localhost:4566` | AWS default |
+| Account ID | `000000000000` | Real AWS account |
+| Credentials | `test/test` | Real IAM credentials |
+| Cost | Free | AWS pricing applies |
 
 ## Running Tests
 
