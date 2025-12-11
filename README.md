@@ -5,30 +5,24 @@ An event-driven file processing pipeline built with Terraform and LocalStack. Th
 ## Architecture
 
 ```
-                         FILE PROCESSING PIPELINE
-    ┌──────────────────────────────────────────────────────────────────┐
-    │                                                                  │
-    │   ┌─────────┐      ┌─────────────┐      ┌─────────────────────┐ │
-    │   │         │      │             │      │                     │ │
-    │   │   S3    │─────▶│   Lambda    │─────▶│        SQS          │ │
-    │   │ Bucket  │      │  Function   │      │       Queue         │ │
-    │   │         │      │             │      │                     │ │
-    │   └─────────┘      └─────────────┘      └─────────────────────┘ │
-    │       │                  │                        │             │
-    │       │                  │                        │             │
-    │   Upload File      Stream & Calculate        Result Message    │
-    │   (Trigger)        Object Size               {object_uri,      │
-    │                                               size_mb}         │
-    │                                                                  │
-    └──────────────────────────────────────────────────────────────────┘
-
-    Data Flow:
-    ──────────
-    1. User uploads file to S3 bucket
-    2. S3 triggers Lambda function
-    3. Lambda streams object content to calculate size
-    4. Lambda sends result message to SQS queue
++-------------+       +----------------+       +-------------+
+|             |       |                |       |             |
+|     S3      |------>|    Lambda      |------>|     SQS     |
+|   Bucket    |       |   Function     |       |    Queue    |
+|             |       |                |       |             |
++-------------+       +----------------+       +-------------+
+      |                      |                       |
+      |                      |                       |
+  Upload File         Stream & Calculate       Result Message
+  (Trigger)           Object Size              {object_uri,
+                                                size_mb}
 ```
+
+**Data Flow:**
+1. User uploads file to S3 bucket
+2. S3 triggers Lambda function
+3. Lambda streams object content to calculate size
+4. Lambda sends result message to SQS queue
 
 ## Project Structure
 
