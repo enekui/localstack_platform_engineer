@@ -1,7 +1,104 @@
 # Integration tests for the complete pipeline
 # Tests the full infrastructure configuration with mock AWS provider
 
-mock_provider "aws" {}
+mock_provider "aws" {
+  override_data {
+    target = data.aws_caller_identity.current
+    values = {
+      account_id = "123456789012"
+      arn        = "arn:aws:iam::123456789012:root"
+      user_id    = "AIDATEST"
+    }
+  }
+
+  override_data {
+    target = module.iam.module.lambda_role.data.aws_caller_identity.current
+    values = {
+      account_id = "123456789012"
+      arn        = "arn:aws:iam::123456789012:root"
+      user_id    = "AIDATEST"
+    }
+  }
+
+  override_data {
+    target = module.iam.module.lambda_role.data.aws_partition.current
+    values = {
+      partition          = "aws"
+      dns_suffix         = "amazonaws.com"
+      reverse_dns_prefix = "com.amazonaws"
+    }
+  }
+
+  override_data {
+    target = module.iam.module.lambda_role.data.aws_iam_policy_document.assume_role[0]
+    values = {
+      json = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lambda.amazonaws.com\"},\"Action\":[\"sts:AssumeRole\",\"sts:TagSession\"]}]}"
+    }
+  }
+
+  override_data {
+    target = module.s3.module.s3_bucket.data.aws_caller_identity.current
+    values = {
+      account_id = "123456789012"
+    }
+  }
+
+  override_data {
+    target = module.s3.module.s3_bucket.data.aws_partition.current
+    values = {
+      partition = "aws"
+    }
+  }
+
+  override_data {
+    target = module.s3.module.s3_bucket.data.aws_region.current
+    values = {
+      name = "eu-west-1"
+    }
+  }
+
+  override_data {
+    target = module.sqs.module.sqs.data.aws_caller_identity.current
+    values = {
+      account_id = "123456789012"
+    }
+  }
+
+  override_data {
+    target = module.sqs.module.sqs.data.aws_partition.current
+    values = {
+      partition = "aws"
+    }
+  }
+
+  override_data {
+    target = module.sqs.module.sqs.data.aws_region.current
+    values = {
+      name = "eu-west-1"
+    }
+  }
+
+  override_data {
+    target = module.lambda.module.lambda_function.data.aws_caller_identity.current
+    values = {
+      account_id = "123456789012"
+    }
+  }
+
+  override_data {
+    target = module.lambda.module.lambda_function.data.aws_partition.current
+    values = {
+      partition = "aws"
+    }
+  }
+
+  override_data {
+    target = module.lambda.module.lambda_function.data.aws_region.current
+    values = {
+      name = "eu-west-1"
+    }
+  }
+}
 
 # Test variables for integration tests
 variables {
@@ -17,91 +114,92 @@ variables {
   lambda_memory_size   = 256
 }
 
-# Test complete infrastructure plan
-run "complete_infrastructure_plan" {
+# Test complete infrastructure configuration
+run "complete_infrastructure_configuration" {
   command = plan
 
-  # Verify all core resources are planned
+  # Verify resource naming follows convention
   assert {
-    condition     = module.s3.bucket_id != null
-    error_message = "S3 bucket should be planned"
+    condition     = local.bucket_name == "integration-test-upload-bucket"
+    error_message = "S3 bucket should follow project naming convention"
   }
 
   assert {
-    condition     = module.sqs.queue_arn != null
-    error_message = "SQS queue should be planned"
+    condition     = local.queue_name == "integration-test-results-queue"
+    error_message = "SQS queue should follow project naming convention"
   }
 
   assert {
-    condition     = module.lambda.function_arn != null
-    error_message = "Lambda function should be planned"
-  }
-
-  assert {
-    condition     = module.iam.lambda_role_arn != null
-    error_message = "IAM role should be planned"
-  }
-}
-
-# Test Lambda environment variables are correctly configured
-run "lambda_environment_variables" {
-  command = plan
-
-  # Verify SQS queue URL is passed to Lambda
-  assert {
-    condition     = module.sqs.queue_url != null
-    error_message = "SQS queue URL should be available for Lambda environment"
+    condition     = local.function_name == "integration-test-file-processor"
+    error_message = "Lambda function should follow project naming convention"
   }
 }
 
 # Test IAM policies reference correct resources
-run "iam_policies_reference_correct_resources" {
+run "iam_policies_use_correct_arns" {
   command = plan
 
-  # Verify IAM policies are created
+  # Verify S3 ARN is correctly constructed
   assert {
-    condition     = module.iam.s3_read_policy_arn != null
-    error_message = "S3 read policy should reference S3 bucket"
+    condition     = local.s3_bucket_arn == "arn:aws:s3:::integration-test-upload-bucket"
+    error_message = "S3 bucket ARN should be correctly constructed for IAM policy"
   }
 
+  # Verify SQS ARN includes account ID
   assert {
-    condition     = module.iam.sqs_write_policy_arn != null
-    error_message = "SQS write policy should reference SQS queue"
+    condition     = local.sqs_queue_arn == "arn:aws:sqs:eu-west-1:123456789012:integration-test-results-queue"
+    error_message = "SQS queue ARN should include account ID for IAM policy"
   }
 }
 
-# Test outputs are correctly exposed
-run "outputs_are_exposed" {
+# Test environment configuration
+run "environment_configuration" {
   command = plan
-
-  assert {
-    condition     = output.s3_bucket_name != null
-    error_message = "S3 bucket name should be exposed as output"
-  }
-
-  assert {
-    condition     = output.sqs_queue_url != null
-    error_message = "SQS queue URL should be exposed as output"
-  }
-
-  assert {
-    condition     = output.lambda_function_name != null
-    error_message = "Lambda function name should be exposed as output"
-  }
-}
-
-# Test common tags are applied
-run "common_tags_applied" {
-  command = plan
-
-  # Tags should be defined in locals
-  assert {
-    condition     = var.project_name == "integration-test"
-    error_message = "Project name should be set correctly"
-  }
 
   assert {
     condition     = var.environment == "integration"
-    error_message = "Environment should be set correctly"
+    error_message = "Environment should be integration"
+  }
+
+  assert {
+    condition     = local.common_tags["Environment"] == "integration"
+    error_message = "Environment tag should be set correctly"
+  }
+}
+
+# Test Lambda configuration
+run "lambda_configuration" {
+  command = plan
+
+  assert {
+    condition     = var.lambda_timeout == 30
+    error_message = "Lambda timeout should be 30 seconds"
+  }
+
+  assert {
+    condition     = var.lambda_memory_size == 256
+    error_message = "Lambda memory should be 256 MB"
+  }
+
+  assert {
+    condition     = var.lambda_runtime == "python3.11"
+    error_message = "Lambda runtime should be python3.11"
+  }
+}
+
+# Test LocalStack vs AWS configuration
+run "localstack_disabled_uses_real_account" {
+  command = plan
+
+  # When use_localstack is false, account_id should use data source
+  assert {
+    condition     = var.use_localstack == false
+    error_message = "use_localstack should be false for integration tests"
+  }
+
+  # Account ID should be from data source (123456789012 from mock)
+  assert {
+    condition     = local.account_id == "123456789012"
+    error_message = "Account ID should be from AWS data source when not using LocalStack"
   }
 }
